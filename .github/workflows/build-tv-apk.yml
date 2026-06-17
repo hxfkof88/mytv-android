@@ -1,16 +1,7 @@
 name: Build TV APK
 
 on:
-  workflow_dispatch:
-    inputs:
-      flavor:
-        description: TV product flavor to build
-        required: true
-        default: original
-        type: choice
-        options:
-          - original
-          - disguised
+  workflow_dispatch: {}
   push:
     branches:
       - main
@@ -31,10 +22,17 @@ permissions:
 
 jobs:
   build-tv-apk:
-    name: Build TV APK
+    name: Build TV APK (${{ matrix.flavor }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: original
+            task_flavor: Original
+          - flavor: disguised
+            task_flavor: Disguised
     env:
-      TV_FLAVOR: ${{ github.event.inputs.flavor || 'original' }}
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -97,13 +95,12 @@ jobs:
       - name: Build TV APK
         shell: bash
         run: |
-          TASK=":tv:assemble${TV_FLAVOR^}Release"
-          ./gradlew --no-daemon --stacktrace "$TASK"
+          ./gradlew --no-daemon --stacktrace ":tv:assemble${{ matrix.task_flavor }}Release"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tv-${{ env.TV_FLAVOR }}-release-apk
+          name: tv-${{ matrix.flavor }}-release-apk
           path: |
-            tv/build/outputs/apk/**/release/*.apk
+            tv/build/outputs/apk/${{ matrix.flavor }}/release/*.apk
           if-no-files-found: error
