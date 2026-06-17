@@ -37,5 +37,8 @@ if (mediaSettingsFile.exists()) {
     apply(from = mediaSettingsFile)
 }
 
-include(":tbsx5")
-project(":tbsx5").projectDir = file("../YYKM/tbsx5")
+val tbsx5ProjectDir = file("../YYKM/tbsx5")
+if (tbsx5ProjectDir.exists()) {
+    include(":tbsx5")
+    project(":tbsx5").projectDir = tbsx5ProjectDir
+}

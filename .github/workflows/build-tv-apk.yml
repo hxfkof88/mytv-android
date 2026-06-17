@@ -1,0 +1,109 @@
+name: Build TV APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: TV product flavor to build
+        required: true
+        default: original
+        type: choice
+        options:
+          - original
+          - disguised
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - ".github/workflows/build-tv-apk.yml"
+      - "allinone/**"
+      - "core/**"
+      - "gradle/**"
+      - "ijkplayer-java/**"
+      - "tv/**"
+      - "build.gradle.kts"
+      - "gradle.properties"
+      - "settings.gradle.kts"
+
+permissions:
+  contents: read
+
+jobs:
+  build-tv-apk:
+    name: Build TV APK
+    runs-on: ubuntu-latest
+    env:
+      TV_FLAVOR: ${{ github.event.inputs.flavor || 'original' }}
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Prepare signing config
+        shell: bash
+        run: |
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
+            if [[ -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
+              echo "ANDROID_KEYSTORE_BASE64 is set, but one or more signing secrets are missing."
+              echo "Required secrets: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD."
+              exit 1
+            fi
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release-keystore.jks"
+            echo "KEYSTORE=$RUNNER_TEMP/release-keystore.jks" >> "$GITHUB_ENV"
+            echo "KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+          else
+            keytool -genkeypair \
+              -keystore "$RUNNER_TEMP/ci-keystore.jks" \
+              -storepass android \
+              -keypass android \
+              -alias androiddebugkey \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android CI,O=GitHub Actions,C=US"
+            echo "KEYSTORE=$RUNNER_TEMP/ci-keystore.jks" >> "$GITHUB_ENV"
+            echo "KEYSTORE_PASSWORD=android" >> "$GITHUB_ENV"
+            echo "KEY_ALIAS=androiddebugkey" >> "$GITHUB_ENV"
+            echo "KEY_PASSWORD=android" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build TV APK
+        shell: bash
+        run: |
+          TASK=":tv:assemble${TV_FLAVOR^}Release"
+          ./gradlew --no-daemon --stacktrace "$TASK"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tv-${{ env.TV_FLAVOR }}-release-apk
+          path: |
+            tv/build/outputs/apk/**/release/*.apk
+          if-no-files-found: error
