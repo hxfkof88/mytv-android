@@ -27,14 +27,7 @@ object Constants {
     /**
      * 直播源
      */
-    val IPTV_SOURCE_LIST = IptvSourceList(
-        listOf(
-            IptvSource(
-                name = "无效占位订阅源",
-                url = "http://1.2.3.4/live.m3u",
-            ),
-        )
-    )
+    val IPTV_SOURCE_LIST = IptvSourceList(emptyList())
 
     /**
      * 直播源缓存时间（毫秒）
