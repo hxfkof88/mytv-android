@@ -21,6 +21,7 @@ import kotlin.math.max
 @Composable
 fun ChannelLineItemList(
     modifier: Modifier = Modifier,
+    channelProvider: () -> Channel = { Channel() },
     lineListProvider: () -> ChannelLineList = { ChannelLineList() },
     currentLineProvider: () -> ChannelLine = { ChannelLine() },
     onSelected: (ChannelLine) -> Unit = {},
@@ -44,6 +45,7 @@ fun ChannelLineItemList(
     ) {
         itemsIndexed(lineList) { index, line ->
             ChannelLineItem(
+                channelProvider = channelProvider,
                 lineProvider = { line },
                 lineIdxProvider = { index },
                 isSelectedProvider = { line == currentLineProvider() },
@@ -58,6 +60,7 @@ fun ChannelLineItemList(
 private fun ChannelLineItemListPreview() {
     MyTvTheme {
         ChannelLineItemList(
+            channelProvider = { Channel.EXAMPLE },
             lineListProvider = { Channel.EXAMPLE.lineList },
             currentLineProvider = { Channel.EXAMPLE.lineList.first() },
         )

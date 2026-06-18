@@ -34,6 +34,7 @@ fun ChannelLineScreen(
     ) {
         ChannelLineItemList(
             modifier = Modifier.width(268.dp),
+            channelProvider = channelProvider,
             lineListProvider = { channelProvider().lineList },
             currentLineProvider = currentLineProvider,
             onSelected = onLineSelected,

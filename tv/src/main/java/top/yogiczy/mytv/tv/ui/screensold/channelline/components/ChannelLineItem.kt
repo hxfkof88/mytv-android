@@ -22,6 +22,7 @@ import androidx.tv.material3.RadioButton
 import androidx.tv.material3.Text
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import top.yogiczy.mytv.core.data.entities.channel.Channel
 import top.yogiczy.mytv.core.data.entities.channel.ChannelLine
 import top.yogiczy.mytv.core.data.network.request
 import top.yogiczy.mytv.core.data.utils.ChannelUtil
@@ -38,11 +39,13 @@ import kotlin.system.measureTimeMillis
 @Composable
 fun ChannelLineItem(
     modifier: Modifier = Modifier,
+    channelProvider: () -> Channel = { Channel() },
     lineProvider: () -> ChannelLine = { ChannelLine() },
     lineIdxProvider: () -> Int = { 0 },
     isSelectedProvider: () -> Boolean = { false },
     onSelected: () -> Unit = {},
 ) {
+    val channel = channelProvider()
     val line = lineProvider()
     val lineIdx = lineIdxProvider()
     val isSelected = isSelectedProvider()
@@ -67,7 +70,7 @@ fun ChannelLineItem(
                 } else {
                     Tag(if (line.url.isIPv6()) "IPv6" else "IPv4")
 
-                    if (ChannelUtil.urlSupportPlayback(line.url)) Tag("回放")
+                    if (ChannelUtil.channelSupportPlayback(channel, line)) Tag("回放")
 
                     if (lineDelay > 0L) {
                         if (lineDelay < 500) {
@@ -130,17 +133,20 @@ private fun ChannelLineItemPreview() {
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             ChannelLineItem(
+                channelProvider = { Channel.EXAMPLE },
                 lineProvider = { ChannelLine.EXAMPLE },
                 lineIdxProvider = { 0 },
                 isSelectedProvider = { true },
             )
 
             ChannelLineItem(
+                channelProvider = { Channel.EXAMPLE },
                 lineProvider = { ChannelLine("http://[2409:8087:5e01:34::20]:6610/ZTE_CMS/00000001000000060000000000000131/index.m3u8?IAS") },
                 lineIdxProvider = { 0 },
             )
 
             ChannelLineItem(
+                channelProvider = { Channel.EXAMPLE },
                 lineProvider = {
                     ChannelLine(
                         url = "webview://https://tv.cctv.com/live/cctv1/",

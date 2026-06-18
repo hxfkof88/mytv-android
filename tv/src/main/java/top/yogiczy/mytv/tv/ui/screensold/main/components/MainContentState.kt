@@ -286,15 +286,12 @@ class MainContentState(
 
         var url = currentChannelLine.playableUrl
         if (_currentPlaybackEpgProgramme != null) {
-            val timeFormat = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
-            val query = listOf(
-                "playseek=",
-                timeFormat.format(_currentPlaybackEpgProgramme!!.startAt),
-                "-",
-                timeFormat.format(_currentPlaybackEpgProgramme!!.endAt),
-            ).joinToString("")
-            url = if (URI(url).query.isNullOrBlank()) "$url?$query" else "$url&$query"
-            url = ChannelUtil.urlToCanPlayback(url)
+            url = ChannelUtil.getPlaybackUrl(
+                _currentChannel,
+                currentChannelLine,
+                _currentPlaybackEpgProgramme!!.startAt / 1000,
+                _currentPlaybackEpgProgramme!!.endAt / 1000
+            ) ?: url
         }
         val line = currentChannelLine.copy(url = url)
 
@@ -341,10 +338,9 @@ class MainContentState(
 
     fun supportPlayback(
         channel: Channel = _currentChannel,
-        lineIdx: Int? = _currentChannelLineIdx,
+        line: ChannelLine = channel.lineList[getLineIdx(channel.lineList)],
     ): Boolean {
-        val currentLineIdx = getLineIdx(channel.lineList, lineIdx)
-        return ChannelUtil.urlSupportPlayback(channel.lineList[currentLineIdx].url)
+        return ChannelUtil.channelSupportPlayback(channel, line)
     }
 }
 
