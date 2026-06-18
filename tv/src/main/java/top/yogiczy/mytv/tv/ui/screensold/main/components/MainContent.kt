@@ -463,11 +463,11 @@ fun MainContent(
                 EpgProgrammeReserveList(settingsViewModel.epgChannelReserveList)
             },
             showEpgProgrammeProgressProvider = { settingsViewModel.uiShowEpgProgrammeProgress },
-            supportPlaybackProvider = { mainContentState.supportPlayback(it, null) },
+            supportPlaybackProvider = { mainContentState.supportPlayback(it, 0) },
             currentPlaybackEpgProgrammeProvider = { mainContentState.currentPlaybackEpgProgramme },
             onEpgProgrammePlayback = { channel, programme ->
                 mainContentState.isChannelScreenVisible = false
-                mainContentState.changeCurrentChannel(channel, null, programme)
+                mainContentState.changeCurrentChannel(channel, 0, programme)
             },
             onEpgProgrammeReserve = { channel, programme ->
                 mainContentState.reverseEpgProgrammeOrNot(channel, programme)
