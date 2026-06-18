@@ -201,16 +201,52 @@ object ChannelUtil {
         }
 
         if (channel.catchup == "default" && channel.catchupSource != null) {
-            val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
-            val tz = TimeZone.getTimeZone("UTC")
-            sdf.timeZone = tz
+            val source = channel.catchupSource
 
-            val startTimeStr = sdf.format(Date(startTime * 1000))
-            val endTimeStr = sdf.format(Date(endTime * 1000))
+            // format: {utc:YmdHMS}
+            if (source.contains("{utc:YmdHMS}")) {
+                val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                val startTimeStr = sdf.format(Date(startTime * 1000))
+                val endTimeStr = sdf.format(Date(endTime * 1000))
 
-            return channel.catchupSource
-                .replace("{utc:YmdHMS}", startTimeStr)
-                .replace("{utcend:YmdHMS}", endTimeStr)
+                return source
+                    .replace("{utc:YmdHMS}", startTimeStr)
+                    .replace("{utcend:YmdHMS}", endTimeStr)
+            }
+
+            // format: ${(b)yyyyMMddHHmmss|GMT}
+            if (source.contains("\${(b)yyyyMMddHHmmss|GMT}")) {
+                val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+                sdf.timeZone = TimeZone.getTimeZone("GMT")
+                val startTimeStr = sdf.format(Date(startTime * 1000))
+                val endTimeStr = sdf.format(Date(endTime * 1000))
+                return source
+                    .replace("\${(b)yyyyMMddHHmmss|GMT}", startTimeStr)
+                    .replace("\${(e)yyyyMMddHHmmss|GMT}", endTimeStr)
+            }
+
+            // format: {start|yyyyMMddHHmmss}
+            if (source.contains("{start|yyyyMMddHHmmss}")) {
+                val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                val startTimeStr = sdf.format(Date(startTime * 1000))
+                val endTimeStr = sdf.format(Date(endTime * 1000))
+                return source
+                    .replace("{start|yyyyMMddHHmmss}", startTimeStr)
+                    .replace("{end|yyyyMMddHHmmss}", endTimeStr)
+            }
+
+            // format: ${(b)yyyyMMddTHHmmss.00Z}
+            if (source.contains("\${(b)yyyyMMddTHHmmss.00Z}")) {
+                val sdf = SimpleDateFormat("yyyyMMdd'T'HHmmss'.00Z'", Locale.getDefault())
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                val startTimeStr = sdf.format(Date(startTime * 1000))
+                val endTimeStr = sdf.format(Date(endTime * 1000))
+                return source
+                    .replace("\${(b)yyyyMMddTHHmmss.00Z}", startTimeStr)
+                    .replace("\${(e)yyyyMMddTHHmmss.00Z}", endTimeStr)
+            }
         }
 
         return null
