@@ -31,6 +31,8 @@ class M3uIptvParser : IptvParser {
                             ?.map { it.trim() }
                             ?: listOf("其他")
                     val logo = Regex("tvg-logo=\"(.+?)\"").find(line)?.groupValues?.get(1)?.trim()
+                    val catchup = Regex("catchup=\"(.+?)\"").find(line)?.groupValues?.get(1)?.trim()
+                    val catchupSource = Regex("catchup-source=\"(.+?)\"").find(line)?.groupValues?.get(1)?.trim()
                     val httpUserAgent =
                         Regex("http-user-agent=\"(.+?)\"").find(line)?.groupValues?.get(1)?.trim()
 
@@ -41,6 +43,8 @@ class M3uIptvParser : IptvParser {
                             groupName = groupName,
                             url = "",
                             logo = logo,
+                            catchup = catchup,
+                            catchupSource = catchupSource,
                             httpUserAgent = httpUserAgent,
                         )
                     }

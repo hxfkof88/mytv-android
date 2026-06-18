@@ -36,6 +36,16 @@ data class Channel(
      * 频道号
      */
     val index: Int = -1,
+
+    /**
+     * 回放类型
+     */
+    val catchup: String? = null,
+
+    /**
+     * 回放源
+     */
+    val catchupSource: String? = null,
 ) {
     companion object {
         val EXAMPLE = Channel(

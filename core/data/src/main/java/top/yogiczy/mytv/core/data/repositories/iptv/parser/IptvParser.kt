@@ -42,6 +42,8 @@ interface IptvParser {
         val epgName: String = name,
         val url: String,
         val logo: String? = null,
+        val catchup: String? = null,
+        val catchupSource: String? = null,
         val httpUserAgent: String? = null,
         val manifestType: String? = null,
         val licenseType: String? = null,
@@ -70,6 +72,8 @@ interface IptvParser {
                                     }
                             ),
                             logo = first.logo,
+                            catchup = first.catchup,
+                            catchupSource = first.catchupSource,
                         )
                     })
             }

@@ -1,7 +1,12 @@
 package top.yogiczy.mytv.core.data.utils
 
+import top.yogiczy.mytv.core.data.entities.channel.Channel
 import top.yogiczy.mytv.core.data.entities.channel.ChannelLine
 import top.yogiczy.mytv.core.data.entities.channel.ChannelLineList
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 
 object ChannelUtil {
@@ -183,8 +188,36 @@ object ChannelUtil {
         else "未知"
     }
 
-    fun urlSupportPlayback(url: String): Boolean {
-        return listOf("pltv", "tvod").any { url.contains(it, ignoreCase = true) }
+    fun getPlaybackUrl(channel: Channel, line: ChannelLine, startTime: Long, endTime: Long): String? {
+        // TVOD/PLTV
+        if (listOf("pltv", "tvod").any { line.url.contains(it, ignoreCase = true) }) {
+            var url = line.url.replace("pltv", "tvod", ignoreCase = true)
+            if (url.contains("?")) {
+                url += "&playseek=${startTime}-${endTime}"
+            } else {
+                url += "?playseek=${startTime}-${endTime}"
+            }
+            return url
+        }
+
+        if (channel.catchup == "default" && channel.catchupSource != null) {
+            val sdf = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault())
+            val tz = TimeZone.getTimeZone("UTC")
+            sdf.timeZone = tz
+
+            val startTimeStr = sdf.format(Date(startTime * 1000))
+            val endTimeStr = sdf.format(Date(endTime * 1000))
+
+            return channel.catchupSource
+                .replace("{utc:YmdHMS}", startTimeStr)
+                .replace("{utcend:YmdHMS}", endTimeStr)
+        }
+
+        return null
+    }
+
+    fun channelSupportPlayback(channel: Channel, line: ChannelLine): Boolean {
+        return channel.catchup == "default" || listOf("pltv", "tvod").any { line.url.contains(it, ignoreCase = true) }
     }
 
     fun urlToCanPlayback(url: String): String {
